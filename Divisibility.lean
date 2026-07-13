@@ -67,7 +67,21 @@ example {a b c m n : ℕ} (h₁ : c ∣ a) (h₂ : c ∣ b) : c ∣ (m*a + n*b) 
 -- a=q*b + r, com 0<=r<b   (r=0 <=> b|a)
 -- (q é chamado de quociente e r de resto da divisão de a por b)
 example {a b : ℤ} (h₁ : b > 0) : ∃ q r : ℤ, a = q*b+r := by
-  sorry
+  use a
+  use a*(1-b)
+  rw [← mul_add]
+  rw [← Int.add_neg_eq_sub]
+  rw [← add_assoc]
+  rw [add_comm]
+  rw [← add_assoc]
+  rw [Int.add_left_neg]
+  rw [add_comm]
+  rw [add_zero]
+  rw [mul_one]
+
+-- Obs: este teorema está incompleto,
+-- da forma que está enunciado aqui, só prova a existência, sem a unicidade
+
 
 --################################################################
 -- Def: o máximo divisor comum de dois inteiros a e b, denotado por (a,b),
@@ -128,7 +142,17 @@ example {a b : ℤ} :
 
 --################################################################
 -- Para todo inteiro positivo t, (t*a, t*b) = t*(a,b)
-
+-- onde (a,b) é o máximo divisor comum de a e b.
+example {a b : ℤ} :
+    ∀ t : ℤ, t > 0 →
+      (Int.gcd (t * a) (t * b) : ℤ) =
+        t * (Int.gcd a b : ℤ) := by
+  intro t ht
+  rw [Int.gcd_mul_left]
+  rw [Nat.cast_mul]
+  rw [Int.natAbs_of_nonneg]
+  apply Int.le_of_lt
+  apply ht
 
 --################################################################
 -- Se c>0 e a e b são divisíveis por c, então
