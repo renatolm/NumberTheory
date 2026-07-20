@@ -157,21 +157,86 @@ example {a b : ℤ} :
 --################################################################
 -- Se c>0 e a e b são divisíveis por c, então
 -- (a/c, b/c) = 1/c * (a,b)
+-- Esse lema é exatamente Int.gcd_ediv
+example {a b c : ℤ} (h₁ : c > 0) (ha : c ∣ a) (hb : c ∣ b) :
+    Int.gcd (a / c) (b / c) = (Int.gcd a b) / c.natAbs := by
+  rcases ha with ⟨a', ha⟩
+  rcases hb with ⟨b', hb⟩
+  rw [ha]
+  rw [hb]
+  have hc : c ≠ 0 := ne_of_gt h₁
+  · rw [Int.mul_ediv_cancel_left]
+    · rw [Int.mul_ediv_cancel_left]
+      · rw [Int.gcd_mul_left]
+        rw [Nat.mul_div_cancel_left]
+        rw [Int.natAbs_pos]
+        apply hc
+      apply hc
+    apply hc
 
 
 --################################################################
 -- Se (a,b) = d, temos que (a/d, b/d) = 1
-
+example {a b : ℤ} {d : ℕ}
+    (hd : Int.gcd a b = d)
+    (hd_pos : 0 < d) :
+    Int.gcd (a / (d : ℤ)) (b / (d : ℤ)) = 1 := by
+  rw [Int.gcd_ediv]
+  · rw [hd]
+    rw [Int.natAbs_natCast]
+    exact Nat.div_self hd_pos
+  · rw [← hd]
+    apply Int.gcd_dvd_left
+  · rw [← hd]
+    apply Int.gcd_dvd_right
 
 --################################################################
 -- Def: Os inteiros a e b são relativamente primos quando (a,b) = 1
 
 -- Para a,b e x inteiros temos (a,b) = (a,b + a*x)
+example {a b x : ℤ} : Int.gcd a b = Int.gcd a (b+a*x) := by
+  apply Nat.dvd_antisymm
+  · apply Int.dvd_gcd
+    · apply Int.gcd_dvd_left
+    apply Int.dvd_add
+    · apply Int.gcd_dvd_right
+    apply Int.dvd_mul_of_dvd_left
+    apply Int.gcd_dvd_left
+  apply Int.dvd_gcd
+  · apply Int.gcd_dvd_left
+  have hsum : (Int.gcd a (b + a * x) : ℤ) ∣ b + a * x := by
+    apply Int.gcd_dvd_right
+  have hprod : (Int.gcd a (b + a * x) : ℤ) ∣ a * x := by
+    apply Int.dvd_mul_of_dvd_left
+    apply Int.gcd_dvd_left
+  have hsub := dvd_sub hsum hprod
+  simpa using hsub
 
 
 --################################################################
 -- Se a|b*c e (a,b)=1 então a|c
-
+example {a b c : ℤ} (h₁ : a ∣ (b * c)) (h₂ : Int.gcd a b = 1) :
+    a ∣ c := by
+  have hbezout : (1 : ℤ) = a * Int.gcdA a b + b * Int.gcdB a b := by
+    have h := Int.gcd_eq_gcd_ab a b
+    rw [h₂] at h
+    norm_num at h
+    apply h
+  rcases h₁ with ⟨k, hk⟩
+  refine ⟨Int.gcdA a b * c + k * Int.gcdB a b, ?_⟩
+  calc
+    c = (1 : ℤ)*c := by ring
+    _ = (a * Int.gcdA a b + b * Int.gcdB a b) * c := by rw [hbezout]
+    _ = a * (Int.gcdA a b * c) + (b * c) * Int.gcdB a b := by ring
+    _ = a * (Int.gcdA a b * c) + (a * k) * Int.gcdB a b := by rw [hk]
+    _ = a * (Int.gcdA a b * c + k * Int.gcdB a b) := by ring
 
 --################################################################
 -- Se a e b são inteiros e a=q*b+r onde q e r são inteiros, então (a,b) = (b,r)
+example {a b q r : ℤ} (hab : a = q * b + r) :
+    Int.gcd a b = Int.gcd b r := by
+  rw [hab]
+  rw [Int.gcd_comm]
+  have hring : q * b + r = r + b * q := by ring
+  rw [hring]
+  apply Int.gcd_add_mul_left_right
